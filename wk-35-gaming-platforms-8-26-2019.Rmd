@@ -1,0 +1,246 @@
+---
+title: "Gaming Consoles Over Time"
+author: "Joe Rubash"
+date: "August 25, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# 01 - Load libraries-----------------------------------------------------------
+library(httr)
+library(readxl)
+library(tidyverse)
+library(scales)
+library(ggthemes)
+library(ggrepel)
+
+
+
+# 02 - Load data----------------------------------------------------------------
+GET("https://query.data.world/s/skd3clskw4i6utn7esnuyvsbop7k4v", 
+    write_disk(tf <- tempfile(fileext = ".xlsx")))
+data <- read_excel(tf)
+
+
+
+# 03 - Format data--------------------------------------------------------------
+# fix names of variables
+names(data) <- make.names(names(data)) %>% 
+    tolower(.)
+
+# change select variables to factors
+data <- data %>% 
+    modify_at(.x = .,
+              .at = c("platform"),
+              as.factor)
+
+# change platform names
+data$platform <- fct_recode(data$platform,
+                            "Mobile" = "Mobile Games",
+                            "PC" = "PC Games",
+                            "Console" = "Console Games")
+
+```
+```{r plot % of revenue}
+windows(width = 10, height = 6)
+
+ggplot(data = data,
+       aes(x = year,
+           y = x..of.revenue,
+           color = platform,
+           group = platform))+
+    geom_line(data = data %>% 
+                  filter(year < 2020),
+              size = 1.25)+
+    geom_line(data = data %>% 
+                  filter(year > 2018),
+              linetype = 3,
+              size = 1.25)+
+    scale_y_continuous(labels = percent_format(accuracy = 2))+
+    scale_x_continuous(breaks=seq(2012,2021,1),
+                       minor_breaks = seq(2012, 2021, 1),
+                       limits = c(2012, 2023))+
+    geom_point(data = data %>%
+                  filter(year == "2021"),
+               aes(x = year,
+                   y = x..of.revenue,
+                   color = platform),
+               size = 2)+
+    labs(x = "Year",
+         y = "% of total revenue",
+         title = "Mobile Devices Continue to Dominate the Gaming Platforms Market",
+         subtitle = "by 2021 roughly twice as much revenue will be generated from
+mobile devices compared to all other platforms combined (PC and Console)")+
+    geom_text(data = data %>%
+                  filter(year == "2021"),
+              aes(label = paste(platform,
+                                paste(x..of.revenue * 100, "%"),
+                                sep = " "),
+                  color = platform,
+                  y = x..of.revenue,
+                  x = year + 0.2),
+              hjust = 0,
+              size = 5,
+              show.legend = FALSE)+
+    theme_tufte()+
+    theme(text = element_text(size = 18),
+          legend.position = "top",
+          legend.justification=c(0, 1))
+
+
+```
+```{r plot total est revenue}
+windows(width = 10, height = 6)
+
+ggplot(data = data,
+       aes(x = year,
+           y = est..revenue / 1000000000,
+           color = platform,
+           group = platform))+
+    # geom_ribbon(data = data %>%
+    #                 group_by(year) %>%
+    #                 summarize(total.rev = sum(est..revenue)),
+    #             aes(ymax = total.rev / 1000000000,
+    #                 x = year),
+    #             ymin = 0,
+    #             alpha = 0.2,
+    #           inherit.aes = FALSE)+
+    geom_line(data = data %>% 
+                  filter(year < 2020),
+              size = 1.25)+
+    geom_line(data = data %>% 
+                  filter(year > 2018),
+              size = 1.25,
+              linetype = 3)+
+    scale_x_continuous(breaks=seq(2012,2021,1),
+                       minor_breaks = seq(2012, 2021, 1),
+                       limits = c(2012, 2023))+
+    geom_point(data = data %>%
+                  filter(year == "2021"),
+               aes(x = year,
+                   y = est..revenue / 1000000000,
+                   color = platform),
+               size = 2)+
+    labs(x = "Year",
+         y = "Est Revenue (Billion $)",
+         title = "Mobile Devices Continue to Dominate the Gaming Platforms Market",
+         subtitle = "by 2021 mobile gaming will generate $32.5B
+more revenue than PC and Console platforms combined")+
+    geom_text(data = data %>%
+                  filter(year == "2021"),
+              aes(label = paste(platform,
+                                " $",
+                                round(est..revenue  / 1000000000, 1),
+                                "B",
+                                sep = ""),
+                  color = platform,
+                  y = est..revenue / 1000000000,
+                  x = year + 0.2),
+              hjust = 0,
+              size = 4.5,
+              show.legend = FALSE)+
+    # geom_text(data = data %>%
+    #               group_by(year) %>% 
+    #               summarize(total.rev = sum(est..revenue)) %>% 
+    #               filter(year == 2021),
+    #           aes(label = stringr::str_wrap(paste("Total revenue",
+    #                             " $",
+    #                             round(total.rev / 1000000000, 1),
+    #                             "B",
+    #                             sep = ""), 15),
+    #               y = total.rev / 1000000000,
+    #               x = year + 0.2,
+    #               hjust = 0,
+    #               size = 5),
+    #           inherit.aes = FALSE)+
+    theme_tufte()+
+    theme(text = element_text(size = 18),
+          legend.position = "none",
+          legend.justification=c(0, 1))
+
+ggsave("./output/total.rev.plot1.png")
+```
+```{r bar graphs of % of revenue by year}
+ggplot(data = data,
+       aes(x = year,
+           y = x..of.revenue,
+           fill = platform))+
+    facet_grid(platform ~ .)+
+    geom_bar(stat = "identity")
+```
+```{r plot2 total est revenue}
+windows(width = 10, height = 6)
+
+ggplot(data = data,
+       aes(x = year,
+           y = est..revenue / 1000000000,
+           color = platform,
+           group = platform))+
+    facet_grid(platform~.)+
+    geom_ribbon(data = data %>%
+                    group_by(year) %>%
+                    summarize(total.rev = sum(est..revenue)),
+                aes(ymax = total.rev / 1000000000, 
+                    x = year),
+                ymin = 0,
+                alpha = 0.2,
+              inherit.aes = FALSE)+
+    geom_line(data = data %>% 
+                  filter(year < 2020),
+              size = 1.25)+
+    geom_line(data = data %>% 
+                  filter(year > 2018),
+              size = 1.25,
+              linetype = 3)+
+    scale_x_continuous(breaks=seq(2012,2021,1),
+                       minor_breaks = seq(2012, 2021, 1),
+                       limits = c(2012, 2023))+
+    geom_point(data = data %>%
+                  filter(year == "2021"),
+               aes(x = year,
+                   y = est..revenue / 1000000000,
+                   color = platform),
+               size = 2)+
+    labs(x = "Year",
+         y = "Est Revenue (Billion $)",
+         title = "Mobile Devices Continue to Dominate the Gaming Platforms Market",
+         subtitle = "by 2021 mobile gaming will generate $32.5B
+more revenue than PC and Console platforms combined")+
+    geom_text(data = data %>%
+                  filter(year == "2021"),
+              aes(label = paste(platform,
+                                " $",
+                                round(est..revenue  / 1000000000, 1),
+                                "B",
+                                sep = ""),
+                  color = platform,
+                  y = est..revenue / 1000000000,
+                  x = year + 0.2),
+              hjust = 0,
+              size = 5,
+              show.legend = FALSE)+
+    geom_text(data = data %>%
+                  group_by(year) %>% 
+                  summarize(total.rev = sum(est..revenue)) %>% 
+                  filter(year == 2021),
+              aes(label = stringr::str_wrap(paste("Total revenue",
+                                " $",
+                                round(total.rev / 1000000000, 1),
+                                "B",
+                                sep = ""), 15),
+                  y = total.rev / 1000000000,
+                  x = year + 0.2,
+                  hjust = 0,
+                  size = 5),
+              inherit.aes = FALSE)+
+    theme_tufte()+
+    theme(text = element_text(size = 18),
+          legend.position = "none",
+          legend.justification=c(0, 1))
+
+ggsave("./output/total.rev.plot2.png")
+```
