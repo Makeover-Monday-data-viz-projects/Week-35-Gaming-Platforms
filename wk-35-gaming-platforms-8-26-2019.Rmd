@@ -101,20 +101,12 @@ ggplot(data = data,
            y = est..revenue / 1000000000,
            color = platform,
            group = platform))+
-    # geom_ribbon(data = data %>%
-    #                 group_by(year) %>%
-    #                 summarize(total.rev = sum(est..revenue)),
-    #             aes(ymax = total.rev / 1000000000,
-    #                 x = year),
-    #             ymin = 0,
-    #             alpha = 0.2,
-    #           inherit.aes = FALSE)+
     geom_line(data = data %>% 
-                  filter(year < 2020),
-              size = 1.25)+
+                  filter(year < 2019),
+              size = 1.5)+
     geom_line(data = data %>% 
-                  filter(year > 2018),
-              size = 1.25,
+                  filter(year > 2017),
+              size = 1.5,
               linetype = 3)+
     scale_x_continuous(breaks=seq(2012,2021,1),
                        minor_breaks = seq(2012, 2021, 1),
@@ -125,13 +117,29 @@ ggplot(data = data,
                    y = est..revenue / 1000000000,
                    color = platform),
                size = 2)+
-    labs(x = "Year",
-         y = "Est Revenue (Billion $)",
-         title = "Mobile Devices Continue to Dominate the Gaming Platforms Market",
-         subtitle = "by 2021 mobile gaming will generate $32.5B
-more revenue than PC and Console platforms combined")+
+    labs(x = "",
+         y = "Revenue (Billion $)",
+         title = "Mobile Devices Continue to Dominate Gaming",
+         subtitle = "by 2021 mobile gaming is projected to
+generate $32.5B more revenue than 
+PC and Console platforms combined",
+caption = "Data downloaded from data.world sourced from Statista based on
+https://newzoo.com/solutions/standard/market-forecasts/global-games-market-report/")+
     geom_text(data = data %>%
-                  filter(year == "2021"),
+                  filter(year == "2021" & platform == "Mobile"),
+              aes(label = paste(platform,
+                                " $",
+                                round(est..revenue  / 1000000000, 1),
+                                "B",
+                                sep = ""),
+                  color = platform,
+                  y = est..revenue / 1000000000,
+                  x = year + 0.2),
+              hjust = 0,
+              size = 6,
+              show.legend = FALSE)+
+    geom_text(data = data %>%
+                  filter(year == "2021" & platform %in% c("PC", "Console")),
               aes(label = paste(platform,
                                 " $",
                                 round(est..revenue  / 1000000000, 1),
@@ -143,24 +151,14 @@ more revenue than PC and Console platforms combined")+
               hjust = 0,
               size = 4.5,
               show.legend = FALSE)+
-    # geom_text(data = data %>%
-    #               group_by(year) %>% 
-    #               summarize(total.rev = sum(est..revenue)) %>% 
-    #               filter(year == 2021),
-    #           aes(label = stringr::str_wrap(paste("Total revenue",
-    #                             " $",
-    #                             round(total.rev / 1000000000, 1),
-    #                             "B",
-    #                             sep = ""), 15),
-    #               y = total.rev / 1000000000,
-    #               x = year + 0.2,
-    #               hjust = 0,
-    #               size = 5),
-    #           inherit.aes = FALSE)+
     theme_tufte()+
-    theme(text = element_text(size = 18),
+    theme(text = element_text(size = 19),
           legend.position = "none",
-          legend.justification=c(0, 1))
+          legend.justification=c(0, 1),
+          plot.title = element_text(size = 30,
+                                    color = "#F47621"),
+          plot.caption = element_text(size = 10))+
+    scale_color_manual(values = c("#808080","#F47621", "#C2C2B8" ))
 
 ggsave("./output/total.rev.plot1.png")
 ```
