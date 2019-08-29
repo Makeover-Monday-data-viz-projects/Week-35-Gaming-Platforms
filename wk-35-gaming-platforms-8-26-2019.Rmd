@@ -101,6 +101,30 @@ ggplot(data = data,
            y = est..revenue / 1000000000,
            color = platform,
            group = platform))+
+    geom_ribbon(data = data %>% 
+                    filter(platform == "Mobile"), 
+                aes(ymax = est..revenue / 1000000000, 
+                    x = year,
+                    fill = platform),
+                ymin = 0,
+                alpha = 0.1,
+              inherit.aes = FALSE)+
+    geom_ribbon(data = data %>% 
+                    filter(platform == "Console"), 
+                aes(ymax = est..revenue / 1000000000, 
+                    x = year,
+                    fill = platform),
+                ymin = 0,
+                alpha = 0.1,
+              inherit.aes = FALSE)+
+    geom_ribbon(data = data %>% 
+                    filter(platform == "PC"), 
+                aes(ymax = est..revenue / 1000000000, 
+                    x = year,
+                    fill = platform),
+                ymin = 0,
+                alpha = 0.1,
+              inherit.aes = FALSE)+
     geom_line(data = data %>% 
                   filter(year < 2019),
               size = 1.5)+
@@ -158,7 +182,8 @@ https://newzoo.com/solutions/standard/market-forecasts/global-games-market-repor
           plot.title = element_text(size = 30,
                                     color = "#F47621"),
           plot.caption = element_text(size = 10))+
-    scale_color_manual(values = c("#808080","#F47621", "#C2C2B8" ))
+    scale_color_manual(values = c("#808080","#F47621", "#C2C2B8" ))+
+    scale_fill_manual(values = c("#808080","#F47621", "#C2C2B8" ))
 
 ggsave("./output/total.rev.plot1.png")
 ```
